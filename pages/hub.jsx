@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 
 import Ermion from '../public/ermion.png'
 import Emhyr from '../public/emhyr.png'
 import Avalach from '../public/avalach.png'
+import Triss from '../public/triss.png'
 
 import Coin from '../public/money.png'
 import Swords from '../public/swords.png'
@@ -14,8 +14,10 @@ import Death from '../public/death.png'
 
 import Check from '../public/check.png'
 import Cross from '../public/delete-button.png'
+import DownArrow from '../public/down-arrow.png'
+import Think from '../public/thinking.png'
 
-// example data below
+// example data below VVVV
 
 // asset data
 const asset_data = [{ "Key": "1", "item": { "asset_type": "melee", "name": "geralt of rivia", "price": 1000, "type": "astforsale", "value": 10 } },
@@ -66,28 +68,186 @@ const inv_data = [{ "Key": "25", "item": { "name": "zoltan chivay", "type": "mel
 { "Key": "43", "item": { "name": "floren", "type": "currency", "value": 1 } },
 { "Key": "44", "item": { "name": "floren", "type": "currency", "value": 1 } }]
 
+//trade requests
+const trd_data = [{ "Key": "65", "item": { "cro_items": ["25", "33", "44", "43"], "cro_items_info": [{ "Key": "25", "item": { "name": "zoltan chivay", "type": "melee", "value": 4 } }, { "Key": "33", "item": { "name": "impenetrable fog", "type": "special", "value": 10 } }], "cro_usr": "lakhan", "p2_dec": "undecided", "p2_items": ["45", "64", "53"], "p2_items_info": [{ "Key": "45", "item": { "name": "zoltan chivay", "type": "melee", "value": 4 } }, { "Key": "53", "item": { "name": "impenetrable fog", "type": "special", "value": 10 } }], "p2_usr": "lk2", "status": "unaccepted", "type": "tradereq" } },
+{ "Key": "67", "item": { "cro_items": ["25", "33", "44", "43"], "cro_items_info": [{ "Key": "25", "item": { "name": "zoltan chivay", "type": "melee", "value": 4 } }, { "Key": "33", "item": { "name": "impenetrable fog", "type": "special", "value": 10 } }], "cro_usr": "lk1", "p2_dec": "undecided", "p2_items": ["45", "64", "53"], "p2_items_info": [{ "Key": "45", "item": { "name": "zoltan chivay", "type": "melee", "value": 4 } }, { "Key": "53", "item": { "name": "impenetrable fog", "type": "special", "value": 10 } }], "p2_usr": "lakhan", "status": "unaccepted", "type": "tradereq" } }]
 
-// trade requests
-const Tradereqs = () => {
+
+// =========================================== code starts below ==================================
+
+const TradeItems = (props) => {
+
+    const [show, changeShow] = useState(false)
+
+    const items = props.items.map(item => {
+        return (
+            <div key={item["Key"]} className='w-full text-sky-400 p-4 border-y-2 border-x-4 
+                border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
+                transition-colors duration-300 space-y-2 rounded-xl'>
+                <p className='w-full text-center'>
+                    {item["item"]["name"]}
+                </p>
+                <div className='flex justify-evenly'>
+                    <div className='flex space-x-2'>
+                        <div className='w-6 h-6'>
+                            <Image src={Metal} layout='intrinsic' />
+                        </div>
+                        <p>{item["item"]["type"]}</p>
+                    </div>
+                    <div className='flex space-x-2'>
+                        <div className='w-6 h-6'>
+                            <Image src={Swords} layout='intrinsic' />
+                        </div>
+                        <p>{item["item"]["value"]}</p>
+                    </div>
+                </div>
+            </div>
+        )
+    })
+
     return (
-        <div></div>
+        <div className='w-7/12 space-y-2' onMouseEnter={() => { changeShow(true) }} onMouseLeave={() => changeShow(false)}>
+            <div className="w-full flex justify-center space-x-2">
+                <p>{props.title}</p>
+                <div className='w-6 h-6'>
+                    <Image src={DownArrow} layout='intrinsic' />
+                </div>
+            </div>
+            {show && items}
+            {show &&
+                (
+                    <div key={"floren" + (Date.now() * Math.random()).toString()} className='w-full text-sky-400 p-4 border-y-2 border-x-4 
+                border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
+                transition-colors duration-300 space-y-2 rounded-xl'>
+                        <p className='w-full text-center'>
+                            floren
+                        </p>
+                        <div className='flex justify-evenly'>
+                            <div className='flex space-x-2'>
+                                <div className='w-6 h-6'>
+                                    <Image src={Metal} layout='intrinsic' />
+                                </div>
+                                <p>currency</p>
+                            </div>
+                            <div className='flex space-x-2'>
+                                <div className='w-6 h-6'>
+                                    <Image src={Coin} layout='intrinsic' />
+                                </div>
+                                <p>{props.coins}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+        </div>
+    )
+}
+
+
+// trade requests (change the for and of depending on the user)
+const TradeReqs = (props) => {
+
+    var myRequests = [];
+    var revRequests = []
+
+    trd_data.forEach(item => {
+        if (item["item"]["cro_usr"] == props.account) {
+            myRequests.push(item)
+        } else {
+            revRequests.push(item)
+        }
+    })
+    const myTradeReqs = myRequests.map((item) => {
+
+        return (
+            <div key={item["Key"]} className='w-1/2 space-y-2 flex flex-col items-center border-4 
+            border-sky-600 border-solid p-4 hover:bg-sky-100 rounded-xl
+            transition-colors duration-300'>
+                <p className='text-md font-semibold underline'>order-{item["Key"]}</p>
+                <TradeItems items={item["item"]["cro_items_info"]} title="my items" coins={(item["item"]["cro_items"].length - item["item"]["cro_items_info"].length).toString()} />
+                <TradeItems items={item["item"]["p2_items_info"]} title="their items" coins={(item["item"]["p2_items"].length - item["item"]["p2_items_info"].length).toString()} />
+                <div className='flex space-x-2 justify-center'>
+                    <p>status </p>
+                    <div className='w-6 h-6'>
+                        <Image src={item["status"] == "unaccepted" ? Check : Cross} layout='intrinsic' />
+                    </div>
+                </div>
+            </div>
+        )
+    })
+
+    const revTradeReqs = revRequests.map(item => {
+
+        // add function to accept the request
+
+        return (
+            <div key={item["Key"]} className='w-1/2 space-y-2 flex flex-col items-center
+        border-4 border-sky-600 border-solid p-4 hover:bg-sky-100 rounded-xl
+        transition-colors duration-300'>
+                <p className='text-md font-semibold underline'>order-{item["Key"]}</p>
+
+                <TradeItems items={item["item"]["cro_items_info"]} title="their items"
+                    coins={(item["item"]["cro_items"].length - item["item"]["cro_items_info"].length).toString()} />
+                <TradeItems items={item["item"]["p2_items_info"]} title="my items"
+                    coins={(item["item"]["p2_items"].length - item["item"]["p2_items_info"].length).toString()} />
+
+                <div className='w-full flex justify-evenly'>
+                    <div className='flex space-x-2 justify-center'>
+                        <p>status </p>
+                        <div className='w-6 h-6'>
+                            <Image src={item["status"] == "unaccepted" ? Check : Cross} layout='intrinsic' />
+                        </div>
+                    </div>
+                    <div className='flex space-x-2 justify-center'>
+                        <p>decision </p>
+                        <div className='w-6 h-6'>
+                            {item["item"]["p2_dec"] == "no" && <Image src={Cross} layout='intrinsic' />}
+                            {item["item"]["p2_dec"] == "yes" && <Image src={Check} layout='intrinsic' />}
+                            {item["item"]["p2_dec"] == "undecided" && <Image src={Think} layout='intrinsic' />}
+                        </div>
+                    </div>
+                    {item["item"]["p2_dec"] == "undecided" && (
+                        <div className='flex space-x-2 justify-center cursor-pointer'>
+                            <p>accept</p>
+                            <div className='w-6 h-6'>
+                                <Image src={RaiseHand} layout='intrinsic' />
+                            </div>
+                        </div>)}
+                </div>
+            </div>)
+    })
+
+    return (
+        <div className='flex bungee'>
+            <div className='w-1/2 flex flex-col items-center mt-4 text-sky-500'>
+                <p className='w-full text-center text-2xl'>wanna trade?</p>
+                <Image src={Triss} layout='intrinsic' />
+            </div>
+            <div className='w-1/2 flex flex-col overflow-scroll h-screen items-center py-10 space-y-4'>
+                <p className='text-xl text-sky-500 underline text-center font-bold'>sent requests</p>
+                {myTradeReqs}
+                <p className='text-xl text-sky-500 underline text-center font-bold'>received requests</p>
+                {revTradeReqs}
+            </div>
+        </div>
     )
 }
 
 // list of assets to buy
-const Assetl = () => {
+const AssetL = (props) => {
 
     // query for assets (use promises)
     // asset_data -> get from backend
     // click on coin to buy
 
     const asts = asset_data.map(item => (
-        <div id={item["Key"]} className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
+        <div key={item["Key"]} className='my-2 w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
         border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-        transition-colors duration-300 space-y-2'>
+        transition-colors duration-300 space-y-2 rounded-xl'>
+
             <p className='w-full text-center'>
                 {item["item"]["name"]}
             </p>
+
             <div className='flex justify-evenly'>
                 <div className='flex space-x-2'>
                     <div className='w-6 h-6'>
@@ -108,7 +268,8 @@ const Assetl = () => {
                     <p>{item["item"]["price"]}</p>
                 </div>
             </div>
-        </div>))
+        </div>)
+    )
 
     return (
         <div className='flex bungee'>
@@ -124,7 +285,7 @@ const Assetl = () => {
 }
 
 // list of voting requests
-const Votereqs = () => {
+const VoteReqs = (props) => {
 
     // get all voting requirements
     const vts = vote_data.map(item => {
@@ -133,9 +294,9 @@ const Votereqs = () => {
         if (item["item"]["type"] == "assetreq") {
             const itemR = item["item"]["info"]
             return (
-                <div id={item["Key"]} className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
+                <div key={item["Key"]} className='my-2 w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
                     border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-                    transition-colors duration-300 space-y-2'>
+                    transition-colors duration-300 space-y-2 rounded-xl'>
                     <p className='w-full text-center text-xl underline font-bold'>asset request</p>
                     <p className='w-full text-center pt-4'>
                         {itemR["name"]}
@@ -160,8 +321,8 @@ const Votereqs = () => {
                             <p>{Math.max(itemR["value"] * 400, 400)}</p>
                         </div>
                     </div>
-                    <div className='flex space-x-2 cursor-pointer justify-center'>
-                        <p>status: </p>
+                    <div className='flex space-x-2 justify-center'>
+                        <p>status </p>
                         <div className='w-6 h-6'>
                             <Image src={item["status"] == "unaccepted" ? Check : Cross} layout='intrinsic' />
                         </div>
@@ -177,15 +338,15 @@ const Votereqs = () => {
         } else if (item["item"]["type"] == "gmakereq") {
             const itemR = item["item"]
             return (
-                <div id={item["Key"]} className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
+                <div key={item["Key"]} className='my-2 w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
                 border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-                transition-colors duration-300 space-y-2'>
+                transition-colors duration-300 space-y-2 rounded-xl'>
                     <p className='w-full text-center text-xl underline font-bold'>maker request</p>
                     <p className='w-full text-center pt-2'>
                         <a href={itemR["info"]}>{itemR["alias"]}</a>
                     </p>
-                    <div className='flex space-x-2 cursor-pointer justify-center'>
-                        <p>status: </p>
+                    <div className='flex space-x-2 justify-center'>
+                        <p>status </p>
                         <div className='w-6 h-6'>
                             <Image src={item["status"] == "unaccepted" ? Check : Cross} layout='intrinsic' />
                         </div>
@@ -202,15 +363,15 @@ const Votereqs = () => {
         } else {
             const itemR = item["item"]
             return (
-                <div id={item["Key"]} className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
+                <div key={item["Key"]} className='my-2 w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
                 border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-                transition-colors duration-300 space-y-2'>
+                transition-colors duration-300 space-y-2 rounded-xl'>
                     <p className='w-full text-center text-xl underline font-bold'>punish</p>
                     <p className='w-full text-center pt-2'>
                         <a href={itemR["info"]}>{itemR["alias"]}</a>
                     </p>
-                    <div className='flex space-x-2 cursor-pointer justify-center'>
-                        <p>status: </p>
+                    <div className='flex space-x-2 justify-center'>
+                        <p>status </p>
                         <div className='w-6 h-6'>
                             <Image src={item["status"] == "unaccepted" ? Check : Cross} layout='intrinsic' />
                         </div>
@@ -245,9 +406,9 @@ const Inventory = (props) => {
     const items = props.items.filter(item => item["item"]["name"] != "floren")
     const amt_coins = props.items.length - items.length
 
-    const invs = items.map(item => (<div id={item["Key"]} className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
+    const invs = items.map(item => (<div key={item["Key"]} className='my-2 w-1/2 text-sky-400 p-4 border-y-2 border-x-4 
         border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-        transition-colors duration-300 space-y-2'>
+        transition-colors duration-300 space-y-2 rounded-xl'>
         <p className='w-full text-center'>
             {item["item"]["name"]}
         </p>
@@ -276,9 +437,9 @@ const Inventory = (props) => {
             </div>
             <div className='flex flex-col overflow-scroll h-screen w-1/2 items-center py-10'>
                 {invs}
-                <div id="coins" className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4
+                <div key="coins" className='w-1/2 text-sky-400 p-4 border-y-2 border-x-4
                 border-solid border-x-sky-500 border-y-sky-600 hover:text-white hover:bg-sky-200 
-        transition-colors duration-300 space-y-2'>
+                transition-colors duration-300 space-y-2'>
                     <p className='w-full text-center'>
                         florens
                     </p>
@@ -319,13 +480,13 @@ const Hub = (props) => {
     const [items, changeItems] = useState(inv_data)
 
     return (
-        <div className='bg-slate-200 h-screen w-screen overflow-hidden bungee'>
+        <div className='bg-gradient-to-l from-slate-200 to-sky-200 h-screen w-screen overflow-hidden bungee'>
             <NavBar changeNav={changeNav} />
-            {nav == 0 && <Tradereqs account={props.account} />}
-            {nav == 1 && <Assetl account={props.account} />}
-            {nav == 2 && <Votereqs account={props.account} />}
+            {nav == 0 && <TradeReqs account={props.account} />}
+            {nav == 1 && <AssetL account={props.account} />}
+            {nav == 2 && <VoteReqs account={props.account} />}
             {nav == 3 && <Inventory items={items} />}
-            <audio src='/merchantmusic.mp3' controls autoplay loop className='fixed bottom-4 left-4'></audio>
+            <audio src='/merchantmusic.mp3' controls autoPlay loop className='fixed bottom-4 left-4'></audio>
         </div>)
 }
 
